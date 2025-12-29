@@ -158,7 +158,6 @@ const SpinningEarth = () => (
 
 // --- Main Application ---
 
-// --- YOUR CLASS DATA HERE ---
 const defaultGroups = [
   // --- 1. Managerial Accounting (Blue) ---
   { id: 1, name: "Managerial Accounting", category: "Classes", link: "", notes: "Practice Q3 from Chapter 4.", pinned: true, color: "blue" },
@@ -204,13 +203,13 @@ const categories = [
 ];
 
 export default function StudyGroupHub() {
+  // --- 1. DATA PERSISTENCE FOR GROUPS ---
   const [groups, setGroups] = useState(() => {
     const saved = localStorage.getItem('studyGroups');
-    // If saved data exists but looks like the old version (different IDs/length), use the new default
-    // This check helps reset your data to the new 16-group structure automatically
     if (saved) {
       const parsed = JSON.parse(saved);
-      if (parsed.length < 8) return defaultGroups; // Reset if it looks like old data
+      // Fallback: If data looks corrupted or old (too few items), reset to defaults
+      if (parsed.length < 1) return defaultGroups; 
       return parsed;
     }
     return defaultGroups;
@@ -220,7 +219,12 @@ export default function StudyGroupHub() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
-  const [darkMode, setDarkMode] = useState(false);
+
+  // --- 2. DATA PERSISTENCE FOR DARK MODE ---
+  const [darkMode, setDarkMode] = useState(() => {
+    const savedMode = localStorage.getItem('rv_hub_dark_mode');
+    return savedMode ? JSON.parse(savedMode) : false;
+  });
   
   const [formData, setFormData] = useState({
     name: '',
@@ -230,11 +234,14 @@ export default function StudyGroupHub() {
     color: 'blue'
   });
 
+  // --- SAVE GROUPS WHEN CHANGED ---
   useEffect(() => {
     localStorage.setItem('studyGroups', JSON.stringify(groups));
   }, [groups]);
 
+  // --- SAVE DARK MODE WHEN CHANGED ---
   useEffect(() => {
+    localStorage.setItem('rv_hub_dark_mode', JSON.stringify(darkMode));
     if (darkMode) {
       document.documentElement.classList.add('dark');
     } else {
@@ -261,7 +268,7 @@ export default function StudyGroupHub() {
   };
 
   const deleteGroup = (id) => {
-    if(confirm('Remove this group card?')) {
+    if(window.confirm('Remove this group card?')) {
       setGroups(groups.filter(g => g.id !== id));
     }
   };
@@ -295,7 +302,7 @@ export default function StudyGroupHub() {
   const filteredGroups = groups.filter(group => {
     const matchesCategory = activeCategory === 'all' || group.category === activeCategory;
     const matchesSearch = group.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                         group.notes.toLowerCase().includes(searchQuery.toLowerCase());
+                          group.notes.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
@@ -391,8 +398,8 @@ export default function StudyGroupHub() {
                         style={{ animationDelay: `${idx * 0.1}s` }}
                         className={`w-full flex items-center justify-between px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300 animate-[fade-in-up_0.5s_ease-out_both] ${
                           isActive 
-                            ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 scale-105' 
-                            : 'text-gray-600 dark:text-gray-300 hover:bg-white/40 dark:hover:bg-gray-700/50 hover:pl-6'
+                          ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30 scale-105' 
+                          : 'text-gray-600 dark:text-gray-300 hover:bg-white/40 dark:hover:bg-gray-700/50 hover:pl-6'
                         }`}
                       >
                         <div className="flex items-center gap-3">
